@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="UTF-8">
+<style>
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 13pt;
+    line-height: 2;
+    color: #1a1a1a;
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 40px;
+    background: #ffffff;
+  }
+
+  h1 {
+    font-size: 26pt;
+    color: #1a3a6b;
+    border-bottom: 3px solid #1a3a6b;
+    padding-bottom: 14px;
+    margin-bottom: 8px;
+  }
+
+  .subtitle {
+    font-size: 11pt;
+    color: #666;
+    margin-bottom: 50px;
+  }
+
+  h2 {
+    font-size: 17pt;
+    color: #ffffff;
+    background-color: #2563EB;
+    padding: 12px 20px;
+    border-radius: 6px;
+    margin-top: 50px;
+    margin-bottom: 20px;
+  }
+
+  h3 {
+    font-size: 13pt;
+    color: #1a3a6b;
+    border-right: 4px solid #2563EB;
+    padding-right: 12px;
+    margin-top: 36px;
+    margin-bottom: 14px;
+  }
+
+  p {
+    margin: 12px 0;
+  }
+
+  ul {
+    padding-right: 28px;
+    margin: 14px 0;
+  }
+
+  ul li {
+    margin-bottom: 10px;
+  }
+
+  .box {
+    background: #EAF2FF;
+    border: 1.5px solid #2563EB;
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin: 20px 0;
+  }
+
+  .box-green {
+    background: #E6F4E6;
+    border: 1.5px solid #2E7D32;
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin: 20px 0;
+  }
+
+  .box-orange {
+    background: #FFF1E0;
+    border: 1.5px solid #ED7100;
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin: 20px 0;
+  }
+
+  .box-red {
+    background: #FFF0F0;
+    border: 1.5px solid #C9243F;
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin: 20px 0;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 12pt;
+  }
+
+  th {
+    background: #2563EB;
+    color: white;
+    padding: 12px 16px;
+    text-align: right;
+  }
+
+  td {
+    padding: 11px 16px;
+    border-bottom: 1px solid #dde3ef;
+  }
+
+  tr:nth-child(even) td {
+    background: #f4f8ff;
+  }
+
+  .flow {
+    font-family: 'Courier New', monospace;
+    background: #1e1e2e;
+    color: #cdd6f4;
+    padding: 20px 24px;
+    border-radius: 8px;
+    font-size: 11pt;
+    direction: ltr;
+    text-align: left;
+    margin: 18px 0;
+    line-height: 1.8;
+  }
+
+  .tag {
+    display: inline-block;
+    background: #2563EB;
+    color: white;
+    font-size: 9.5pt;
+    padding: 3px 12px;
+    border-radius: 20px;
+    margin-left: 8px;
+  }
+
+  .tag-green {
+    background: #2E7D32;
+  }
+
+  .tag-orange {
+    background: #ED7100;
+  }
+
+  .page-break {
+    page-break-before: always;
+  }
+
+  .highlight {
+    background: #fff9c4;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  .spacer {
+    height: 30px;
+  }
+</style>
+</head>
+<body>
+
+<h1>מסמך ארכיטקטורה — מיגרציה ל AWS</h1>
+<p class="subtitle">DevOps Engineering Assignment · AWS Cloud Migration · Infrastructure as Code</p>
+
+
+<!-- ===== STAGE 1 SECTION 1 ===== -->
+<h2>1. תיאור רכיבי הארכיטקטורה</h2>
+
+<p>המערכת מורכבת מ-8 מיקרוסרביסים שמועברים מסביבת on-premise ל AWS. להלן תיאור כל הרכיבים וכיצד הם מתחברים.</p>
+
+<div class="spacer"></div>
+
+
+<!-- VPC -->
+<h3>VPC (Virtual Private Cloud)</h3>
+<div class="box">
+  <p>ה VPC הוא הרשת הפרטית שלנו בתוך AWS — כמו ראוטר בבית שיוצר רשת פנימית. כל הרכיבים יושבים בתוכו ומבודדים מחשבונות אחרים.</p>
+
+  <p>הגדרנו טווח כתובות של <strong>10.0.0.0/16</strong> — כלומר כ-65,000 כתובות IP פרטיות לשימוש פנימי. הכתובות האלה לא קיימות באינטרנט הציבורי — אף אחד מבחוץ לא יכול להגיע אליהן.</p>
+
+  <p>ה VPC פרוס על <strong>2 Availability Zones</strong> (מרכזי נתונים פיזיים נפרדים) — AZ1 ו AZ2 — כדי להבטיח שתקלה פיזית באחד מהם לא תוריד את המערכת כולה.</p>
+</div>
+
+<div class="spacer"></div>
+
+
+<!-- Subnets -->
+<h3>סאבנטים (Subnets)</h3>
+<p>בתוך ה VPC יש 6 סאבנטים — חלוקה פנימית של הרשת, כמו חדרים בתוך בית. כל סאבנט יש לו טווח כתובות וחוקי ניתוב משלו:</p>
+
+<table>
+  <tr>
+    <th>סאבנט</th>
+    <th>CIDR</th>
+    <th>AZ</th>
+    <th>מה יושב בו</th>
+  </tr>
+  <tr><td>Public Subnet 1</td><td>10.0.1.0/24</td><td>AZ1</td><td>NAT Gateway, ALB node</td></tr>
+  <tr><td>Public Subnet 2</td><td>10.0.2.0/24</td><td>AZ2</td><td>NAT Gateway, ALB node</td></tr>
+  <tr><td>Private Subnet 1 (EC2)</td><td>10.0.11.0/24</td><td>AZ1</td><td>EC2 Auto Scaling Group</td></tr>
+  <tr><td>Private Subnet 2 (EC2)</td><td>10.0.12.0/24</td><td>AZ2</td><td>EC2 Auto Scaling Group</td></tr>
+  <tr><td>Private Subnet 3 (RDS)</td><td>10.0.21.0/24</td><td>AZ1</td><td>RDS PostgreSQL Primary</td></tr>
+  <tr><td>Private Subnet 4 (RDS)</td><td>10.0.22.0/24</td><td>AZ2</td><td>RDS PostgreSQL Standby</td></tr>
+</table>
+
+<p><span class="tag tag-green">Public</span> סאבנט ציבורי = בטבלת הניתוב שלו יש נתיב ל Internet Gateway — רכיבים בו יכולים לקבל ולשלוח תנועה לאינטרנט.</p>
+
+<p><span class="tag tag-orange">Private</span> סאבנט פרטי = בטבלת הניתוב שלו יש נתיב ל NAT Gateway בלבד — רכיבים בו יכולים רק לצאת לאינטרנט (דרך NAT), אבל לא נגישים מבחוץ.</p>
+
+<div class="spacer"></div>
+
+
+<!-- Internet Gateway -->
+<h3>Internet Gateway</h3>
+<div class="box">
+  <p>השער בין ה VPC לאינטרנט. הוא מחובר ל VPC כולו ולא יושב בסאבנט ספציפי.</p>
+
+  <p>בלעדיו שום תנועה לא יכולה להיכנס או לצאת מה VPC. הוא לא מסנן ולא מנתב — רק "פותח את הדלת".</p>
+</div>
+
+<div class="spacer"></div>
+
+
+<!-- NAT Gateway -->
+<h3>NAT Gateway</h3>
+<div class="box">
+  <p>רכיב שיושב בסאבנט הציבורי ומאפשר לרכיבים בסאבנט הפרטי (EC2) לצאת לאינטרנט — מבלי להיות חשופים לתנועה נכנסת.</p>
+
+  <p>כשה EC2 רוצה למשוך Docker image מ ECR, הוא פונה ל NAT Gateway. ה NAT יוצא לאינטרנט עם ה Elastic IP (כתובת ציבורית קבועה) שלו. האינטרנט רואה את כתובת ה NAT בלבד — לא יודע שה EC2 קיים.</p>
+
+  <p>כשהתשובה חוזרת, ה NAT זוכר מי ביקש ומעביר אותה חזרה ל EC2 הנכון. אבל תנועה שמישהו מבחוץ יזם — נחסמת. זה מובנה ב NAT.</p>
+
+  <p>יש לנו <strong>2 NAT Gateways</strong> — אחד בכל AZ — כדי שאם AZ אחד נופל, ה EC2 של ה AZ השני ימשיך לתפקד.</p>
+
+  <div class="flow">EC2 (10.0.11.x)  →  NAT Gateway  →  Internet Gateway  →  ECR / CloudWatch</div>
+</div>
+
+<div class="spacer"></div>
+
+
+<!-- ALB -->
+<h3>Application Load Balancer (ALB)</h3>
+<div class="box">
+  <p>מקבל את כל הבקשות מהמשתמשים ומחלק אותן בין ה EC2 instances.</p>
+
+  <p>הוא יושב בסאבנטים הציבוריים ויש לו כתובת DNS ציבורית אחת — אך מאחורי הקלעים יש לו node אחד בכל AZ (שתי נקודות כניסה לתוך המערכת). AWS מנתב את המשתמש אוטומטית ל node הבריא והפנוי.</p>
+
+  <p>אם AZ1 נופל — כל התנועה עוברת ל AZ2 בלי שהמשתמש ירגיש.</p>
+
+  <p>ה ALB גם מבצע <strong>health checks</strong> — כל 30 שניות הוא בודק כל EC2 instance. אם instance לא עונה — הוא מוצא מהרוטציה אוטומטית, והבקשות עוברות ל instances הבריאים.</p>
+
+  <div class="flow">Internet  →  Internet Gateway  →  ALB  →  EC2 instances</div>
+</div>
+
+<div class="spacer"></div>
+
+
+<!-- EC2 ASG -->
+<h3>EC2 Auto Scaling Group</h3>
+<div class="box">
+  <p>קבוצת שרתים וירטואליים (EC2 instances) שמריצים את ה Docker containers של המיקרוסרביסים.</p>
+
+  <p>ה Auto Scaling Group (ASG) הוא מנהל שיושב "מעל" ה instances ואחראי על להוסיף ולהסיר instances אוטומטית לפי עומס:</p>
+
+  <ul>
+    <li><strong>מינימום:</strong> 2 instances — תמיד אחד בכל AZ לזמינות גבוהה</li>
+    <li><strong>מקסימום:</strong> 10 instances — תקרה למניעת עלויות</li>
+  </ul>
+
+  <p>כל instance חדש שה ASG מרים נבנה לפי <strong>Launch Template</strong> — תבנית שמגדירה את סוג השרת, Security Group, IAM Role, ו user data (סקריפט שמתקין Docker ומריץ את הקונטיינר בהפעלה).</p>
+</div>
+
+<div class="spacer"></div>
+
+
+<!-- RDS -->
+<h3>RDS PostgreSQL Multi-AZ</h3>
+<div class="box">
+  <p>מחליף את מסד הנתונים ה on-premise. שירות מנוהל של AWS — כלומר AWS מטפל בעדכונים, גיבויים ותחזוקה.</p>
+
+  <p>ה Multi-AZ אומר שיש עותק סינכרוני (Standby) ב AZ השני שמתעדכן בזמן אמת:</p>
+
+  <ul>
+    <li><strong>Primary:</strong> מסד הנתונים הפעיל — ה EC2 מדבר רק איתו דרך כתובת DNS אחת</li>
+    <li><strong>Standby:</strong> עותק מדויק — לא נגיש לאפליקציה, קיים רק כגיבוי</li>
+  </ul>
+
+  <p>אם ה Primary נופל, AWS מקדם את ה Standby להיות ה Primary החדש אוטומטית תוך כ-60 שניות. כתובת ה DNS נשארת אותו דבר — ה EC2 לא צריך לשנות כלום וממשיך לעבוד בלי לדעת שמשהו השתנה.</p>
+</div>
+
+<div class="spacer"></div>
+
+
+<!-- Supporting Services -->
+<h3>שירותים תומכים</h3>
+<table>
+  <tr>
+    <th>שירות</th>
+    <th>תפקיד</th>
+  </tr>
+  <tr>
+    <td>Amazon ECR</td>
+    <td>מאגר Docker images — ה EC2 שולף משם את תמונות הקונטיינרים בהפעלה</td>
+  </tr>
+  <tr>
+    <td>Amazon CloudWatch</td>
+    <td>אוסף לוגים, מטריקות, ומגדיר התראות (CPU מעל 80%, שגיאות 5xx מעל 1%)</td>
+  </tr>
+  <tr>
+    <td>AWS Secrets Manager</td>
+    <td>שומר את סיסמת ה RDS בצורה מאובטחת — ה EC2 שולף אותה בזמן ריצה, לאחר שה IAM Role שמחובר אליו מאשר את הגישה</td>
+  </tr>
+  <tr>
+    <td>Amazon S3</td>
+    <td>שמירת קובץ ה Terraform state — קובץ שמתאר את כל מצב התשתית</td>
+  </tr>
+  <tr>
+    <td>Amazon DynamoDB</td>
+    <td>נעילת ה Terraform state — מונע מ-2 אנשים לשנות תשתית בו זמנית (נעילה אטומית)</td>
+  </tr>
+  <tr>
+    <td>AWS IAM</td>
+    <td>ניהול הרשאות — Roles (תעודות זהות לרכיבים) ו Policies (מה כל רכיב מורשה לעשות)</td>
+  </tr>
+</table>
+
+
+<!-- ===== SECTION 2 ===== -->
+<div class="page-break"></div>
+<h2>2. החלטות עיצוב</h2>
+
+<div class="spacer"></div>
+
+
+<!-- EC2 vs ECS vs Lambda -->
+<h3>למה EC2 ולא ECS או Lambda?</h3>
+<div class="box-green">
+  <p>בחרנו EC2 כי הוא <strong>מתאים לפרויקט הזה</strong> — לא בהכרח כי הוא "הטוב ביותר" תמיד.</p>
+
+  <p>EC2 הוא שרת לינוקס רגיל — מתקינים עליו Docker ומריצים קונטיינרים ישירות. פשוט, שליטה מלאה, עקומת למידה קטנה.</p>
+
+  <ul>
+    <li>
+      <strong>לעומת Lambda:</strong>
+      <br>המיקרוסרביסים הם תהליכים שרצים כל הזמן ומחכים לבקשות. Lambda מיועד לפונקציות קצרות שמופעלות לפי אירועים, עם timeout של 15 דקות ו cold start — לא מתאים לשרת שצריך להיות זמין 24/7 עם 50,000 משתמשים.
+    </li>
+    <li>
+      <strong>לעומת ECS:</strong>
+      <br>ECS הוא שירות לניהול קונטיינרים — טכנית מתאים, ובפרויקטים עתידיים עם צוות מנוסה ב AWS הוא בהחלט אפשרות טובה. אבל הוא דורש ללמוד שפה חדשה: Task Definitions, Clusters, Services. EC2 פשוט יותר להתחיל איתו, נותן שליטה מלאה, ומתאים למיגרציה מהירה.
+    </li>
+  </ul>
+
+  <p>בנוסף, ההוראות מבקשות במפורש <strong>Launch Template עם user data</strong> להתקנת Docker ידנית — יכולת שקיימת רק ב EC2.</p>
+</div>
+
+<div class="spacer"></div>
+
+
+<!-- Multi-AZ RDS -->
+<h3>למה Multi-AZ RDS? מה זה מגן מפניו?</h3>
+<div class="box-green">
+  <p>Multi-AZ מגן מפני <strong>נקודת כשל אחת</strong> במסד הנתונים:</p>
+
+  <ul>
+    <li>תקלת חומרה פיזית ב AZ אחד — המסד עובר ל AZ השני</li>
+    <li>חלון תחזוקה — AWS יכול לעדכן את ה Primary, לעבור ל Standby, ולחזור</li>
+    <li>שגיאה אנושית שמורידה את ה instance</li>
+  </ul>
+
+  <p>בלי Multi-AZ — כל תקלה במסד הנתונים מורידה את המערכת כולה ומפרה את ה 99.99% uptime SLA.</p>
+</div>
+
+<div class="spacer"></div>
+
+
+<!-- 99.99% uptime -->
+<h3>כיצד הארכיטקטורה משיגה 99.99% uptime?</h3>
+<div class="box-green">
+  <p>99.99% uptime אומר פחות מ-<strong>52 דקות השבתה בשנה</strong>. שלוש שכבות הגנה מבטיחות זאת:</p>
+
+  <ul>
+    <li>
+      <strong>Multi-AZ EC2 ASG:</strong>
+      <br>תמיד רצים לפחות 2 instances — אחד בכל AZ. אם AZ שלם נופל, ה ALB מפסיק לנתב אליו תוך שניות, וה ASG מרים instances חדשים ב AZ הבריא.
+    </li>
+    <li>
+      <strong>Multi-AZ RDS:</strong>
+      <br>failover אוטומטי תוך ~60 שניות — AWS מקדם את ה Standby ל Primary בלי שום התערבות אנושית.
+    </li>
+    <li>
+      <strong>ALB Health Checks:</strong>
+      <br>בודק כל instance כל 30 שניות. instance שלא עונה מוצא מהרוטציה מיידית — משתמשים לא מגיעים ל instance שבור.
+    </li>
+  </ul>
+</div>
+
+
+<!-- ===== SECTION 3 ===== -->
+<h2>3. מודל רשת ואבטחה</h2>
+
+<div class="spacer"></div>
+
+
+<!-- Public vs Private -->
+<h3>מה יושב בפאבליק ומה בפרייבט?</h3>
+
+<p>הכלל הפשוט: אם הרכיב צריך לקבל תנועה <strong>ישירות מהאינטרנט</strong> — ציבורי. אחרת — פרטי.</p>
+
+<table>
+  <tr>
+    <th>רכיב</th>
+    <th>סאבנט</th>
+    <th>סיבה</th>
+  </tr>
+  <tr>
+    <td>ALB</td>
+    <td>Public</td>
+    <td>חייב לקבל תנועה ישירות מהאינטרנט — הוא "שומר הסף" היחיד</td>
+  </tr>
+  <tr>
+    <td>NAT Gateway</td>
+    <td>Public</td>
+    <td>צריך כתובת IP ציבורית (Elastic IP) כדי לצאת לאינטרנט בשם ה EC2</td>
+  </tr>
+  <tr>
+    <td>EC2</td>
+    <td>Private</td>
+    <td>לא צריך להיות חשוף לאינטרנט — מקבל תנועה רק מה ALB</td>
+  </tr>
+  <tr>
+    <td>RDS</td>
+    <td>Private</td>
+    <td>מסד נתונים לא צריך להיות נגיש מבחוץ בשום מקרה</td>
+  </tr>
+</table>
+
+<div class="spacer"></div>
+
+
+<!-- Security Groups -->
+<h3>Security Groups — עקרון המינימום</h3>
+
+<p>כל רכיב מחובר ל Security Group שמגדיר בדיוק מה מותר ומה אסור <strong>ברמת הרשת</strong> (מי יכול לתקשר עם מי, על איזה פורט):</p>
+
+<div class="box-orange">
+  <p><strong>ALB Security Group</strong></p>
+  <ul>
+    <li><strong>Inbound:</strong> פורט 443 (HTTPS) מ 0.0.0.0/0 — כולם יכולים להגיע</li>
+    <li><strong>Outbound:</strong> פורט 8080 לכיוון EC2 Security Group בלבד</li>
+  </ul>
+</div>
+
+<div class="box-orange">
+  <p><strong>EC2 Security Group</strong></p>
+  <ul>
+    <li><strong>Inbound:</strong> פורט 8080 מ ALB Security Group בלבד — לא מהאינטרנט</li>
+    <li><strong>Outbound:</strong> פורט 5432 לכיוון RDS Security Group</li>
+    <li><strong>Outbound:</strong> פורט 443 לאינטרנט דרך NAT (עבור ECR, CloudWatch, Secrets Manager)</li>
+  </ul>
+</div>
+
+<div class="box-orange">
+  <p><strong>RDS Security Group</strong></p>
+  <ul>
+    <li><strong>Inbound:</strong> פורט 5432 מ EC2 Security Group בלבד</li>
+    <li><strong>Outbound:</strong> כלום — מסד הנתונים לא יוזם תנועה לשום מקום</li>
+  </ul>
+</div>
+
+<p><strong>הערה:</strong> ב Security Groups מציינים Security Group של הרכיב השני — לא כתובת IP. כך אם מחר יש 10 EC2 instances במקום 2, החוק תקף לכולם אוטומטית.</p>
+
+<div class="spacer"></div>
+
+
+<!-- Secrets -->
+<h3>כיצד מאוחסנים ונגשים סודות?</h3>
+<div class="box-red">
+  <p>סיסמת ה RDS לא כתובה בקוד ולא ב environment variables — היא נשמרת ב <strong>AWS Secrets Manager</strong>.</p>
+
+  <p>ה EC2 שולף אותה בזמן ריצה. כדי שזה יעבוד, ה EC2 מחובר ל <strong>IAM Role</strong> — תעודת זהות שמגדירה מה הוא מורשה לעשות. ה Role מכיל Policies שמתירות:</p>
+
+  <ul>
+    <li><code>secretsmanager:GetSecretValue</code> — לקרוא את הסוד הספציפי של סיסמת ה DB (לפי ARN — הכתובת הייחודית של המשאב)</li>
+    <li><code>ecr:GetAuthorizationToken</code>, <code>ecr:BatchGetImage</code> — למשיכת Docker images מ ECR</li>
+    <li><code>logs:PutLogEvents</code> — לשליחת לוגים ל CloudWatch</li>
+  </ul>
+
+  <p>ב GitHub Actions — משתמשים ב <strong>OIDC</strong> לאימות מול AWS. במקום לשמור מפתחות גישה קבועים ב GitHub, GitHub מזדהה מול AWS ומקבל גישה זמנית בלבד — בטוח יותר.</p>
+</div>
+
+
+<!-- ===== SECTION 4 ===== -->
+<div class="page-break"></div>
+<h2>4. אסטרטגיית סקיילינג</h2>
+
+<div class="spacer"></div>
+
+
+<h3>כיצד המערכת עוברת מ-1,000 ל-5,000 בקשות בשנייה?</h3>
+
+<div class="box">
+  <p>ה <strong>Auto Scaling Group (ASG)</strong> אחראי על סקיילינג אוטומטי. הגדרנו <strong>Target Tracking Policy</strong> עם יעד CPU של 70%.</p>
+
+  <div class="spacer"></div>
+
+  <p><strong>איך זה עובד:</strong></p>
+  <ul>
+    <li>ה ASG מודד את <strong>ממוצע ה CPU</strong> של כל ה instances ביחד בכל רגע נתון</li>
+    <li>אם הממוצע עולה מעל 70% — ה ASG מחשב כמה instances נדרשים ומרים אותם <strong>בבת אחת</strong></li>
+    <li>אם הממוצע יורד מתחת — ה ASG מוריד instances לא נחוצים</li>
+  </ul>
+
+  <div class="spacer"></div>
+
+  <p><strong>הנוסחה:</strong></p>
+  <div class="flow" style="direction: ltr; text-align: left;">
+Required instances = (Current avg CPU / Target CPU) x Current instances
+
+Example:
+    Current avg CPU .... 90%
+    Target CPU ......... 70%
+    Current instances .. 2
+
+    90 / 70 x 2 = 2.57  →  round up  →  3 new instances</div>
+
+  <div class="spacer"></div>
+
+  <p><strong>למה Target Tracking ולא Simple Scaling?</strong></p>
+  <ul>
+    <li>
+      <strong>Simple Scaling:</strong>
+      <br>מוסיף instance אחד בכל פעם, מחכה כמה דקות לראות אם זה עזר, ואז מחליט אם להוסיף עוד — תהליך איטי.
+    </li>
+    <li>
+      <strong>Target Tracking:</strong>
+      <br>מחשב מיידית כמה instances נדרשים ומרים את כולם בבת אחת — תגובה מהירה לעומסי שיא.
+    </li>
+  </ul>
+
+  <div class="spacer"></div>
+
+  <p><strong>הגדרות ה ASG בפרויקט:</strong></p>
+  <ul>
+    <li><strong>min_size = 2</strong> — תמיד לפחות instance אחד בכל AZ לזמינות גבוהה</li>
+    <li><strong>max_size = 10</strong> — תקרה למניעת עלויות בלתי מוגבלות</li>
+    <li><strong>target CPU = 70%</strong> — שומר על 30% מרווח ביטחון לפני שה instance רווי</li>
+  </ul>
+
+  <div class="spacer"></div>
+
+  <p><strong>ה ALB והמשתמשים:</strong></p>
+  <p>ה ALB הוא שירות מנוהל של AWS שסוקל אוטומטית — 50,000 משתמשים בו זמנית מחולקים על כל ה instances הבריאים בשני ה AZs. לא נדרשת הגדרה מיוחדת.</p>
+</div>
+
+<br><br><br>
+<p style="text-align:center; color:#999; font-size:10pt;">AWS Cloud Migration Architecture Document · DevOps Engineering Assignment</p>
+
+</body>
+</html>
