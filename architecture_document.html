@@ -553,7 +553,8 @@ Example:
   <div class="spacer"></div>
 
   <p><strong>ה ALB והמשתמשים:</strong></p>
-  <p>ה ALB הוא שירות מנוהל של AWS שסוקל אוטומטית — 50,000 משתמשים בו זמנית מחולקים על כל ה instances הבריאים בשני ה AZs. לא נדרשת הגדרה מיוחדת.</p>
+  <p>ה ALB מחובר ל <strong>Target Group</strong> — רשימה של EC2 instances שהוא מנתב אליהם תנועה. ה Target Group מחובר ל ASG, כך שכל instance חדש שעולה נרשם אוטומטית וה ALB מתחיל לשלוח אליו בקשות.</p>
+  <p>ה ALB עצמו הוא שירות מנוהל של AWS שמתרחב אוטומטית — 50,000 משתמשים בו זמנית מחולקים בין כל ה EC2 instances הבריאים בשני ה AZs, בלי שנצטרך לסקיל את ה ALB בעצמנו.</p>
 </div>
 
 <br><br><br>
