@@ -214,6 +214,21 @@
 <div class="spacer"></div>
 
 
+<!-- Route 53 -->
+<h3>Route 53 (DNS)</h3>
+<div class="box">
+  <p>שירות ה DNS של AWS. הוא יושב <strong>מחוץ ל VPC</strong> לחלוטין — תפקידו לתרגם שם דומיין לכתובת IP.</p>
+
+  <p>כשמשתמש מקליד כתובת כמו <code dir="ltr">app.mycompany.com</code>, שירות <span dir="ltr">Route 53</span> מחזיר את כתובת ה IP של אחד מה ALB nodes (אחד לכל AZ). השירות מחליט לאיזה node לשלוח לפי זמינות וקרבה גיאוגרפית. רק אחרי שהמשתמש קיבל את הכתובת — הוא שולח את הבקשה בפועל.</p>
+
+  <p>Route 53 לא מעביר תנועה — הוא רק עונה על השאלה "מה הכתובת?". התנועה עצמה עוברת דרך ה Internet Gateway.</p>
+
+  <div class="flow">User: "app.mycompany.com"  →  Route 53: "52.x.x.x"  →  User sends request to 52.x.x.x</div>
+</div>
+
+<div class="spacer"></div>
+
+
 <!-- Internet Gateway -->
 <h3>Internet Gateway</h3>
 <div class="box">
@@ -325,6 +340,10 @@
   <tr>
     <td>AWS IAM</td>
     <td>ניהול הרשאות — Roles (תעודות זהות לרכיבים) ו Policies (מה כל רכיב מורשה לעשות)</td>
+  </tr>
+  <tr>
+    <td>Amazon Route 53</td>
+    <td>שירות DNS — מתרגם שם דומיין (כמו app.mycompany.com) לכתובת IP של ה ALB</td>
   </tr>
 </table>
 
