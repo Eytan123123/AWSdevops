@@ -1,79 +1,78 @@
 name: CI
 
-# מתי הפייפלאיין רץ
+# Runs on every push to any branch, and on every PR targeting main
 on:
-  push:                       # כל push לכל ענף, כולל main
+  push:
   pull_request:
-    branches: [main]          # על כל PR שמכוון ל main
+    branches: [main]
 
-# הרשאות שה GitHub Actions צריך כדי לרוץ
+# Permissions required for this workflow
 permissions:
-  id-token: write       # נחוץ ל OIDC — מאפשר ל GitHub להוכיח את עצמו ל AWS
-  contents: read        # קריאה מהריפו
-  pull-requests: write  # כדי להוסיף תגובה ל PR עם תוצאת ה plan
+  id-token: write        # Required for OIDC: lets GitHub prove identity to AWS
+  contents: read         # Read repo files
+  pull-requests: write   # Allow posting plan output as a PR comment
 
 jobs:
   validate:
     name: Validate & Plan
     runs-on: ubuntu-latest
 
-    # כל הפקודות ירוצו בתוך תיקיית terraform/
+    # Run all commands inside the terraform/ directory
     defaults:
       run:
         working-directory: ./terraform
 
     steps:
-      # שלב 1: מוריד את הקוד מהריפו לתוך המכונה הוירטואלית
+      # Pull the repo into the runner
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # שלב 2: מתקין את Terraform על המכונה
+      # Install Terraform
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.9.0
 
-      # שלב 3: בודק פורמט — אם יש קבצי .tf לא מפורמטים נכון, נכשל
+      # Fail if any .tf file is not properly formatted
       - name: Terraform fmt
         run: terraform fmt -check -recursive
 
-      # שלב 4: מתקין tflint — לינטר ל Terraform
+      # Install tflint (Terraform linter)
       - name: Setup tflint
         uses: terraform-linters/setup-tflint@v4
 
-      # שלב 5: מריץ tflint על כל הקוד
+      # Run tflint on all modules
       - name: Run tflint
         run: tflint --recursive
 
-      # שלב 6: סורק את הקוד לבעיות אבטחה (הגדרות חשופות, סודות בקוד וכו')
+      # Scan for security issues (open SGs, hardcoded secrets, unencrypted resources)
       - name: Run tfsec
         uses: aquasecurity/tfsec-action@v1.0.3
         with:
           working_directory: ./terraform
 
-      # שלב 7: מתחבר ל AWS דרך OIDC — בלי מפתחות גישה קבועים
+      # Authenticate to AWS using OIDC — no long-lived access keys
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
 
-      # שלב 8: terraform init — מאתחל את ה providers
-      # backend=false כי אנחנו לא רוצים לטעון state ב CI
+      # Initialize providers; skip backend in CI (no state needed for plan)
       - name: Terraform Init
         run: terraform init -backend=false
 
-      # שלב 9: בודק שהקונפיגורציה תקינה (סינטקס, references)
+      # Validate configuration syntax and references
       - name: Terraform Validate
         run: terraform validate
 
-      # שלב 10: מריץ plan ושומר את הפלט
+      # Produce a plan; do not fail the job here so we can still post the output
       - name: Terraform Plan
         id: plan
         run: terraform plan -no-color
         continue-on-error: true
 
-      # שלב 11: אם זה PR, מוסיף תגובה עם תוצאת ה plan
+      # On PRs, post the plan output as a comment on the PR
       - name: Comment plan on PR
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
