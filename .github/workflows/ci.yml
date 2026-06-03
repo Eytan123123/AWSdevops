@@ -1,0 +1,93 @@
+name: CI
+
+# מתי הפייפלאיין רץ
+on:
+  push:
+    branches-ignore: [main]   # על כל push חוץ מ main (main מטופל ב cd.yml)
+  pull_request:
+    branches: [main]          # על כל PR שמכוון ל main
+
+# הרשאות שה GitHub Actions צריך כדי לרוץ
+permissions:
+  id-token: write       # נחוץ ל OIDC — מאפשר ל GitHub להוכיח את עצמו ל AWS
+  contents: read        # קריאה מהריפו
+  pull-requests: write  # כדי להוסיף תגובה ל PR עם תוצאת ה plan
+
+jobs:
+  validate:
+    name: Validate & Plan
+    runs-on: ubuntu-latest
+
+    # כל הפקודות ירוצו בתוך תיקיית terraform/
+    defaults:
+      run:
+        working-directory: ./terraform
+
+    steps:
+      # שלב 1: מוריד את הקוד מהריפו לתוך המכונה הוירטואלית
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # שלב 2: מתקין את Terraform על המכונה
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.0
+
+      # שלב 3: בודק פורמט — אם יש קבצי .tf לא מפורמטים נכון, נכשל
+      - name: Terraform fmt
+        run: terraform fmt -check -recursive
+
+      # שלב 4: מתקין tflint — לינטר ל Terraform
+      - name: Setup tflint
+        uses: terraform-linters/setup-tflint@v4
+
+      # שלב 5: מריץ tflint על כל הקוד
+      - name: Run tflint
+        run: tflint --recursive
+
+      # שלב 6: סורק את הקוד לבעיות אבטחה (הגדרות חשופות, סודות בקוד וכו')
+      - name: Run tfsec
+        uses: aquasecurity/tfsec-action@v1.0.3
+        with:
+          working_directory: ./terraform
+
+      # שלב 7: מתחבר ל AWS דרך OIDC — בלי מפתחות גישה קבועים
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      # שלב 8: terraform init — מאתחל את ה providers
+      # backend=false כי אנחנו לא רוצים לטעון state ב CI
+      - name: Terraform Init
+        run: terraform init -backend=false
+
+      # שלב 9: בודק שהקונפיגורציה תקינה (סינטקס, references)
+      - name: Terraform Validate
+        run: terraform validate
+
+      # שלב 10: מריץ plan ושומר את הפלט
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color
+        continue-on-error: true
+
+      # שלב 11: אם זה PR, מוסיף תגובה עם תוצאת ה plan
+      - name: Comment plan on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const output = `#### Terraform Plan 📖
+            \`\`\`
+            ${{ steps.plan.outputs.stdout }}
+            \`\`\`
+            `;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            });
