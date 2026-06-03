@@ -2,8 +2,7 @@ name: CI
 
 # מתי הפייפלאיין רץ
 on:
-  push:
-    branches-ignore: [main]   # על כל push חוץ מ main (main מטופל ב cd.yml)
+  push:                       # כל push לכל ענף, כולל main
   pull_request:
     branches: [main]          # על כל PR שמכוון ל main
 
