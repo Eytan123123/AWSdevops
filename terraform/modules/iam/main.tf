@@ -9,6 +9,19 @@
 # resources to authenticate without long-lived access keys.
 
 
+# Required by tflint when running --recursive on each module
+terraform {
+  required_version = ">= 1.5.0"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
+
 # 1. OIDC Identity Provider
 # Tells AWS: "I trust GitHub as an identity provider."
 # Created once per AWS account.
