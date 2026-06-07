@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+# Environment variables available to all jobs and steps in this workflow
+env:
+  AWS_REGION: eu-west-1
+
 # Permissions required for this workflow
 permissions:
   id-token: write        # Required for OIDC: lets GitHub prove identity to AWS
@@ -55,7 +59,7 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-region: ${{ vars.AWS_REGION }}
+          aws-region: ${{ env.AWS_REGION }}
 
       # Initialize providers; skip backend in CI (no state needed for plan)
       - name: Terraform Init
