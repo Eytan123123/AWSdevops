@@ -54,9 +54,6 @@ jobs:
       # Authenticate to AWS using OIDC — no long-lived access keys
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ vars.AWS_REGION }}
 
       # Initialize providers; skip backend in CI (no state needed for plan)
       - name: Terraform Init
@@ -66,11 +63,10 @@ jobs:
       - name: Terraform Validate
         run: terraform validate
 
-      # Produce a plan; do not fail the job here so we can still post the output
+      # Produce a plan
       - name: Terraform Plan
         id: plan
         run: terraform plan -no-color
-        continue-on-error: true
 
       # On PRs, post the plan output as a comment on the PR
       - name: Comment plan on PR
