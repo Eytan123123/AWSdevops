@@ -7,8 +7,9 @@ on:
     branches: [main]
 
 # Environment variables available to all jobs and steps in this workflow
+# Values come from GitHub Variables (Settings → Secrets and variables → Actions → Variables)
 env:
-  AWS_REGION: eu-west-1
+  AWS_REGION: ${{ vars.AWS_REGION }}
 
 # Permissions required for this workflow
 permissions:
