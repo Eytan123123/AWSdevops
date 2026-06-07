@@ -8,11 +8,12 @@ on:
 
 # Permissions required for this workflow
 permissions:
-  contents: read   # Read repo files
+  contents: read         # Read repo files
+  pull-requests: write   # Allow posting plan output as a PR comment
 
 jobs:
   validate:
-    name: Static Checks
+    name: Validate & Plan
     runs-on: ubuntu-latest
 
     # Run all commands inside the terraform/ directory
@@ -49,10 +50,33 @@ jobs:
         with:
           working_directory: ./terraform
 
-      # Initialize providers; skip backend (no state needed for static validation)
+      # Initialize providers; skip backend (no state needed for plan in CI)
       - name: Terraform Init
         run: terraform init -backend=false
 
       # Validate configuration syntax and references
       - name: Terraform Validate
         run: terraform validate
+
+      # Produce a plan; the AWS provider runs offline thanks to skip_* flags in main.tf
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color
+
+      # On PRs, post the plan output as a comment on the PR
+      - name: Comment plan on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const output = `#### Terraform Plan 📖
+            \`\`\`
+            ${{ steps.plan.outputs.stdout }}
+            \`\`\`
+            `;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            });
