@@ -32,7 +32,8 @@ jobs:
         with:
           terraform_version: 1.9.0
 
-      # Fail if any .tf file is not properly formatted
+      # TEST: code formatting — spacing, indentation, alignment.
+      # Fails if any .tf file deviates from canonical Terraform style.
       - name: Terraform fmt
         run: terraform fmt -check -recursive
 
@@ -40,11 +41,13 @@ jobs:
       - name: Setup tflint
         uses: terraform-linters/setup-tflint@v4
 
-      # Run tflint on all modules
+      # TEST: best practices — unused variables, deprecated syntax,
+      # missing required_version, invalid instance types, etc.
       - name: Run tflint
         run: tflint --recursive
 
-      # Scan for security issues (open SGs, hardcoded secrets, unencrypted resources)
+      # TEST: security — open security groups, hardcoded secrets,
+      # unencrypted resources, IAM roles with overly broad permissions.
       - name: Run tfsec
         uses: aquasecurity/tfsec-action@v1.0.3
         with:
@@ -54,11 +57,13 @@ jobs:
       - name: Terraform Init
         run: terraform init -backend=false
 
-      # Validate configuration syntax and references
+      # TEST: configuration correctness — valid syntax, all references
+      # resolve, variables exist, types match. Does not contact AWS.
       - name: Terraform Validate
         run: terraform validate
 
-      # Produce a plan; the AWS provider runs offline thanks to skip_* flags in main.tf
+      # TEST: full plan computation — produces the diff between current
+      # state and desired state. AWS provider runs offline via skip_* flags.
       - name: Terraform Plan
         id: plan
         run: terraform plan -no-color
