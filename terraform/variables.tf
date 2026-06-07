@@ -8,7 +8,7 @@ variable "aws_region" {
 }
 
 variable "environment" {
-  description = "Environment name applied as a tag on every resource"
+  description = "Environment name applied as a tag on every resource (dev / staging / prod)"
   type        = string
   default     = "dev"
 }
