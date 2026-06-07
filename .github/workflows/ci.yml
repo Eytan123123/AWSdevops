@@ -6,20 +6,13 @@ on:
   pull_request:
     branches: [main]
 
-# Environment variables available to all jobs and steps in this workflow
-# Values come from GitHub Variables (Settings → Secrets and variables → Actions → Variables)
-env:
-  AWS_REGION: ${{ vars.AWS_REGION }}
-
 # Permissions required for this workflow
 permissions:
-  id-token: write        # Required for OIDC: lets GitHub prove identity to AWS
-  contents: read         # Read repo files
-  pull-requests: write   # Allow posting plan output as a PR comment
+  contents: read   # Read repo files
 
 jobs:
   validate:
-    name: Validate & Plan
+    name: Static Checks
     runs-on: ubuntu-latest
 
     # Run all commands inside the terraform/ directory
@@ -56,39 +49,10 @@ jobs:
         with:
           working_directory: ./terraform
 
-      # Authenticate to AWS using OIDC — no long-lived access keys
-      - name: Configure AWS credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-region: ${{ env.AWS_REGION }}
-
-      # Initialize providers; skip backend in CI (no state needed for plan)
+      # Initialize providers; skip backend (no state needed for static validation)
       - name: Terraform Init
         run: terraform init -backend=false
 
       # Validate configuration syntax and references
       - name: Terraform Validate
         run: terraform validate
-
-      # Produce a plan
-      - name: Terraform Plan
-        id: plan
-        run: terraform plan -no-color
-
-      # On PRs, post the plan output as a comment on the PR
-      - name: Comment plan on PR
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const output = `#### Terraform Plan 📖
-            \`\`\`
-            ${{ steps.plan.outputs.stdout }}
-            \`\`\`
-            `;
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            });
