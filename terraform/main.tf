@@ -30,3 +30,14 @@ provider "aws" {
   skip_metadata_api_check     = true
   skip_requesting_account_id  = true
 }
+
+
+# IAM module — GitHub Actions OIDC Provider + Role
+# Declared in code so terraform plan validates it, but never applied
+# (no AWS account available for the one-time bootstrap)
+module "iam" {
+  source = "./modules/iam"
+
+  github_repository = var.github_repository
+  environment       = var.environment
+}
