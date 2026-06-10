@@ -37,17 +37,15 @@ resource "aws_db_subnet_group" "main" {
 
 # 2. The RDS PostgreSQL instance
 #
-# tfsec notes (intentional choices for this assignment):
+# tfsec/trivy notes (intentional choices for this assignment):
 #   - performance_insights: not required by the project spec; adds cost
 #   - iam_database_authentication: not required; project uses Secrets Manager
 #   - deletion_protection: controlled via variable, defaults to false for dev
 #
-# tfsec:ignore:aws-rds-enable-performance-insights
-# tfsec:ignore:aws-rds-enable-performance-insights-encryption
-# tfsec:ignore:aws-rds-no-iam-auth
-# tfsec:ignore:builtin.aws.rds.aws0176
-# tfsec:ignore:aws-rds-enable-deletion-protection
-# tfsec:ignore:builtin.aws.rds.aws0177
+# trivy:ignore:AVD-AWS-0133 # performance insights
+# trivy:ignore:AVD-AWS-0078 # performance insights encryption
+# trivy:ignore:AVD-AWS-0176 # IAM database authentication
+# trivy:ignore:AVD-AWS-0177 # deletion protection
 resource "aws_db_instance" "main" {
   identifier = "main-postgres"
 
