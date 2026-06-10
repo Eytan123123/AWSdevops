@@ -33,11 +33,13 @@ jobs:
       - name: Terraform Init
         run: terraform init -backend=false
 
-      # Produce the plan and save it to a binary file (tfplan)
-      # The AWS provider runs offline thanks to skip_* flags in main.tf
+      # Produce the plan and save it to a binary file (tfplan).
+      # Also produce a human-readable text version for the summary step.
+      # The AWS provider runs offline thanks to skip_* flags in main.tf.
       - name: Terraform Plan
-        id: plan
-        run: terraform plan -no-color -out=tfplan
+        run: |
+          terraform plan -no-color -out=tfplan
+          terraform show -no-color tfplan > plan.txt
 
       # Upload the tfplan file as a workflow artifact for later review
       - name: Upload plan artifact
@@ -47,11 +49,15 @@ jobs:
           path: terraform/tfplan
           retention-days: 30
 
-      # Write a readable summary of the plan to the GitHub Actions job summary page
+      # Write a readable summary of the plan to the GitHub Actions job summary page.
+      # Using `cat plan.txt` avoids shell-escaping the plan output (which contains
+      # parentheses and other characters that would break `echo "${{ ... }}"`).
       - name: Post plan summary
         run: |
-          echo "## Terraform Plan Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "${{ steps.plan.outputs.stdout }}" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## Terraform Plan Summary"
+            echo ""
+            echo '```'
+            cat plan.txt
+            echo '```'
+          } >> $GITHUB_STEP_SUMMARY
