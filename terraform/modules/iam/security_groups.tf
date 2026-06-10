@@ -1,7 +1,7 @@
 # Security Groups — least-privilege network firewall rules
 #
 # Flow:
-#   Internet ──443──> ALB ──app_port──> EC2 ──db_port──> RDS
+#   Internet ──80──> ALB ──app_port──> EC2 ──db_port──> RDS
 #                                       └──443──> Internet (via NAT, for ECR/Secrets/CloudWatch)
 #
 # We use aws_security_group_rule (separate from the SG resource) instead of
