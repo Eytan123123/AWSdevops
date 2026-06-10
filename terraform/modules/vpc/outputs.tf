@@ -1,18 +1,10 @@
-# Outputs exposed by the VPC module
-# Other modules consume these to know where to place themselves and what network to talk on.
+# Outputs exposed by the VPC module — only values consumed elsewhere in the code.
 
 # Consumed by: module.iam (Security Groups attach to this VPC),
 #              module.alb (Target Group must be in the VPC).
 output "vpc_id" {
   description = "ID of the VPC"
   value       = aws_vpc.main.id
-}
-
-# Consumed by: nothing right now — kept for future use (e.g., a Security Group
-# rule that allows traffic from anywhere inside the VPC by CIDR).
-output "vpc_cidr" {
-  description = "CIDR block of the VPC"
-  value       = aws_vpc.main.cidr_block
 }
 
 # Consumed by: module.alb (the ALB spans both public subnets, one node per AZ).
