@@ -34,3 +34,14 @@ output "db_credentials_secret_arn" {
   description = "ARN of the Secrets Manager secret holding the RDS credentials"
   value       = aws_secretsmanager_secret.db_credentials.arn
 }
+
+output "db_password" {
+  description = "Generated DB password (consumed by the RDS module at creation time)"
+  value       = random_password.db.result
+  sensitive   = true
+}
+
+output "db_username" {
+  description = "DB master username (consumed by the RDS module)"
+  value       = "postgres"
+}

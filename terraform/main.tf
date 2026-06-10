@@ -56,3 +56,16 @@ module "iam" {
   app_port          = var.app_port
   db_port           = var.db_port
 }
+
+
+# RDS module — PostgreSQL Multi-AZ database
+module "rds" {
+  source = "./modules/rds"
+
+  environment        = var.environment
+  private_subnet_ids = module.vpc.private_subnet_ids
+  security_group_id  = module.iam.rds_security_group_id
+  db_username        = module.iam.db_username
+  db_password        = module.iam.db_password
+  db_port            = var.db_port
+}

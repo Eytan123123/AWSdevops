@@ -36,3 +36,13 @@ output "db_credentials_secret_arn" {
   description = "ARN of the Secrets Manager secret with the RDS credentials"
   value       = module.iam.db_credentials_secret_arn
 }
+
+output "rds_endpoint" {
+  description = "RDS connection endpoint (address:port)"
+  value       = module.rds.db_endpoint
+}
+
+output "rds_address" {
+  description = "RDS hostname"
+  value       = module.rds.db_address
+}
