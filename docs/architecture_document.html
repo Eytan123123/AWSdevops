@@ -219,7 +219,7 @@
 <div class="box">
   <p>שירות ה DNS של AWS. הוא יושב <strong>מחוץ ל VPC</strong> לחלוטין — תפקידו לתרגם שם דומיין לכתובת IP.</p>
 
-  <p>כשמשתמש מקליד כתובת כמו <code dir="ltr">app.mycompany.com</code>, שירות <span dir="ltr">Route 53</span> מחזיר את כתובת ה IP של אחד מה ALB nodes (אחד לכל AZ). השירות מחליט לאיזה node לשלוח לפי זמינות וקרבה גיאוגרפית. רק אחרי שהמשתמש קיבל את הכתובת — הוא שולח את הבקשה בפועל.</p>
+  <p>כשמשתמש מקליד כתובת כמו <code dir="ltr">app.mycompany.com</code>, שירות <span dir="ltr">Route 53</span> מחזיר את כתובת ה IP של אחד מה ALB nodes (אחד לכל AZ). אחרי שהמשתמש הגיע ל node — ה ALB עצמו מחלק את התנועה בין ה EC2 instances הבריאים ב Target Group. כלומר Route 53 בוחר node, ה ALB בוחר EC2.</p>
 
   <p>Route 53 לא מעביר תנועה — הוא רק עונה על השאלה "מה הכתובת?". התנועה עצמה עוברת דרך ה Internet Gateway.</p>
 
