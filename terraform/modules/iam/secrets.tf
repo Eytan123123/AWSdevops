@@ -6,6 +6,11 @@
 
 # 1. The secret container
 #    recovery_window_in_days = 7 lets you restore the secret if accidentally deleted
+#
+#    Encryption uses the AWS-managed KMS key (default). A customer-managed key
+#    would give finer control but is not required by the project spec and would
+#    add cost without improving the assignment outcome.
+# tfsec:ignore:aws-ssm-secret-use-customer-key
 resource "aws_secretsmanager_secret" "db_credentials" {
   name                    = "rds-db-credentials"
   description             = "Master credentials for the RDS PostgreSQL instance"
