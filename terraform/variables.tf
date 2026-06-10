@@ -54,3 +54,9 @@ variable "db_port" {
   type        = number
   default     = 5432
 }
+
+variable "domain_name" {
+  description = "Apex domain name for the Route 53 hosted zone (e.g., mycompany.com)"
+  type        = string
+  default     = "mycompany.com"
+}

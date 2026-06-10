@@ -72,6 +72,8 @@ module "rds" {
 
 
 # ALB module — public Application Load Balancer + Target Group + Listener
+# Also creates the Route 53 hosted zone and alias record (DNS layer lives here
+# because it's tightly coupled to the ALB).
 module "alb" {
   source = "./modules/alb"
 
@@ -80,4 +82,5 @@ module "alb" {
   public_subnet_ids = module.vpc.public_subnet_ids
   security_group_id = module.iam.alb_security_group_id
   app_port          = var.app_port
+  domain_name       = var.domain_name
 }

@@ -56,3 +56,8 @@ output "alb_target_group_arn" {
   description = "ARN of the ALB Target Group (consumed by the EC2 Auto Scaling Group)"
   value       = module.alb.target_group_arn
 }
+
+output "app_fqdn" {
+  description = "Public FQDN users hit (Route 53 alias to the ALB)"
+  value       = module.alb.app_fqdn
+}

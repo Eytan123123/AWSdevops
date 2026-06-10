@@ -90,3 +90,32 @@ resource "aws_lb_listener" "main" {
     target_group_arn = aws_lb_target_group.app.arn
   }
 }
+
+
+# 4. Route 53 Hosted Zone — DNS zone for the application domain.
+#    In a real deployment this matches a registered domain; here it stays in the
+#    plan so the architecture is reflected end-to-end.
+resource "aws_route53_zone" "main" {
+  name = var.domain_name
+
+  tags = {
+    Name        = var.domain_name
+    Environment = var.environment
+  }
+}
+
+
+# 5. Route 53 alias record — points app.<domain> to the ALB.
+#    Using an alias (not a CNAME) lets AWS resolve to the ALB's underlying IPs
+#    and supports apex records if needed.
+resource "aws_route53_record" "app" {
+  zone_id = aws_route53_zone.main.zone_id
+  name    = "app.${var.domain_name}"
+  type    = "A"
+
+  alias {
+    name                   = aws_lb.main.dns_name
+    zone_id                = aws_lb.main.zone_id
+    evaluate_target_health = true
+  }
+}

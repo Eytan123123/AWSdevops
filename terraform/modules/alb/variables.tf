@@ -36,3 +36,8 @@ variable "deletion_protection" {
   type        = bool
   default     = false
 }
+
+variable "domain_name" {
+  description = "Apex domain name for the Route 53 hosted zone (e.g., mycompany.com)"
+  type        = string
+}
