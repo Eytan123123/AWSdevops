@@ -11,6 +11,26 @@ terraform {
       version = "~> 5.0"
     }
   }
+
+  # Remote state backend — project spec: "S3 + DynamoDB state locking (configured, not applied)".
+  #
+  # The bucket and DynamoDB table must already exist before `terraform init` is run
+  # with the backend enabled. They are NOT created by this project — they live in a
+  # separate bootstrap step (typically a one-off `terraform apply` in a tiny project
+  # that just creates the bucket + table).
+  #
+  # Why a separate step? You can't store Terraform state in a bucket that Terraform
+  # itself is creating. Chicken-and-egg. The bootstrap solves it.
+  #
+  # In the CI workflows we pass `-backend=false` to terraform init so it can plan
+  # offline without needing the bucket to exist.
+  backend "s3" {
+    bucket         = "aws-migration-tfstate-eytan"
+    key            = "terraform/state.tfstate"
+    region         = "eu-west-1"
+    dynamodb_table = "terraform-state-lock"
+    encrypt        = true
+  }
 }
 
 # AWS provider configuration
