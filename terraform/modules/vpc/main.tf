@@ -29,9 +29,10 @@ terraform {
 
 
 # 1. The VPC itself
-# tfsec:ignore:aws-ec2-require-vpc-flow-logs-for-all-vpcs
+#
 # VPC Flow Logs are not required by the project spec; would add cost without
 # improving the assignment outcome. In a real deployment we would enable them.
+# tfsec:ignore:aws-ec2-require-vpc-flow-logs-for-all-vpcs
 resource "aws_vpc" "main" {
   cidr_block           = var.vpc_cidr
   enable_dns_hostnames = true # so AWS-issued DNS names (e.g., RDS endpoint) work
