@@ -29,9 +29,20 @@ jobs:
         with:
           terraform_version: 1.9.0
 
-      # Initialize providers; skip backend (no state needed for plan)
+      # Override the S3 backend to a local one so Terraform can init without
+      # talking to AWS. The S3 backend in main.tf stays as the production
+      # configuration; the override applies only here in CI.
+      - name: Override backend for CI (local state)
+        run: |
+          cat > backend_override.tf <<EOF
+          terraform {
+            backend "local" {}
+          }
+          EOF
+
+      # Initialize providers and the (now local) backend
       - name: Terraform Init
-        run: terraform init -backend=false
+        run: terraform init
 
       # Produce the plan and save it to a binary file (tfplan).
       # Also produce a human-readable text version for the summary step.
