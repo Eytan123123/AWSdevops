@@ -6,19 +6,21 @@
 #   - 5xx alarm on the ALB Target Group    (> 1% of requests)
 
 
-# 1. CloudWatch Log Group — application logs from the microservice land here.
-#    POC keeps a single log group; production would create one per microservice.
+# 1. CloudWatch Log Group per microservice — application logs land here.
+#    for_each lets us create one resource per microservice name in the input list.
 #
 #    Encryption uses the AWS-managed CloudWatch KMS key (default). A
 #    customer-managed key would give finer control but is not required by the
 #    project spec and would add cost.
 # trivy:ignore:AVD-AWS-0017
-resource "aws_cloudwatch_log_group" "app" {
-  name              = "/app/${var.service_name}"
+resource "aws_cloudwatch_log_group" "microservices" {
+  for_each = toset(var.microservice_names)
+
+  name              = "/app/${each.key}"
   retention_in_days = var.log_retention_days
 
   tags = {
-    Name        = "/app/${var.service_name}"
+    Name        = "/app/${each.key}"
     Environment = var.environment
   }
 }
