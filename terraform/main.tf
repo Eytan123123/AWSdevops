@@ -84,3 +84,30 @@ module "alb" {
   app_port          = var.app_port
   domain_name       = var.domain_name
 }
+
+
+# EC2 module — Launch Template + ASG + scaling policy + CloudWatch Log Groups + Alarms
+module "ec2" {
+  source = "./modules/ec2"
+
+  environment = var.environment
+  aws_region  = var.aws_region
+
+  # Network
+  private_subnet_ids = module.vpc.private_subnet_ids
+  security_group_id  = module.iam.ec2_security_group_id
+
+  # IAM
+  instance_profile_name = module.iam.ec2_instance_profile_name
+
+  # ALB
+  target_group_arn        = module.alb.target_group_arn
+  alb_arn_suffix          = module.alb.alb_arn_suffix
+  target_group_arn_suffix = module.alb.target_group_arn_suffix
+
+  # App / DB
+  app_port     = var.app_port
+  db_host      = module.rds.db_endpoint
+  db_port      = var.db_port
+  db_secret_id = "rds-db-credentials"
+}

@@ -1,0 +1,36 @@
+#!/bin/bash
+set -euo pipefail
+
+# Installed on every EC2 instance at first boot, by the Launch Template's user_data.
+# Templated by Terraform — the $${...} placeholders are filled in by templatefile().
+
+# 1. Install Docker, jq, and the AWS CLI
+yum update -y
+yum install -y docker jq awscli
+systemctl enable --now docker
+
+# 2. Fetch DB credentials from Secrets Manager (the EC2 IAM Role grants us access)
+DB_SECRET=$(aws secretsmanager get-secret-value \
+  --secret-id ${db_secret_id} \
+  --region   ${aws_region} \
+  --query    SecretString \
+  --output   text)
+
+DB_USERNAME=$(echo "$DB_SECRET" | jq -r .username)
+DB_PASSWORD=$(echo "$DB_SECRET" | jq -r .password)
+
+# 3. Authenticate Docker to ECR (placeholder — the real registry URL is set by the
+#    deployment pipeline). Image is assumed to be pre-built and pushed to ECR.
+aws ecr get-login-password --region ${aws_region} \
+  | docker login --username AWS --password-stdin "${ecr_registry}" || true
+
+# 4. Run the microservice container
+docker run -d \
+  --name ${service_name} \
+  --restart unless-stopped \
+  -p ${app_port}:${app_port} \
+  -e DB_HOST="${db_host}" \
+  -e DB_PORT="${db_port}" \
+  -e DB_USERNAME="$DB_USERNAME" \
+  -e DB_PASSWORD="$DB_PASSWORD" \
+  ${ecr_registry}/${service_name}:latest
