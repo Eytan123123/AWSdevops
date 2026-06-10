@@ -1,0 +1,57 @@
+name: CD
+
+# Runs only on push to main (i.e. after a PR merge — direct pushes blocked by branch protection)
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read   # Read repo files
+
+jobs:
+  plan:
+    name: Plan & Archive
+    runs-on: ubuntu-latest
+
+    # Run all commands inside the terraform/ directory
+    defaults:
+      run:
+        working-directory: ./terraform
+
+    steps:
+      # Pull the repo into the runner
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Install Terraform
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.0
+
+      # Initialize providers; skip backend (no state needed for plan)
+      - name: Terraform Init
+        run: terraform init -backend=false
+
+      # Produce the plan and save it to a binary file (tfplan)
+      # The AWS provider runs offline thanks to skip_* flags in main.tf
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color -out=tfplan
+
+      # Upload the tfplan file as a workflow artifact for later review
+      - name: Upload plan artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan
+          path: terraform/tfplan
+          retention-days: 30
+
+      # Write a readable summary of the plan to the GitHub Actions job summary page
+      - name: Post plan summary
+        run: |
+          echo "## Terraform Plan Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.plan.outputs.stdout }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
