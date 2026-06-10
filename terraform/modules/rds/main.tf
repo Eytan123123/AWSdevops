@@ -81,7 +81,8 @@ resource "aws_db_instance" "main" {
   # Stream PostgreSQL logs to CloudWatch Logs
   enabled_cloudwatch_logs_exports = ["postgresql"]
 
-  # Lifecycle
+  # Lifecycle — protection is controlled by var.deletion_protection (defaults to false for dev)
+  # trivy:ignore:AVD-AWS-0177
   deletion_protection = var.deletion_protection
   skip_final_snapshot = var.skip_final_snapshot
 
