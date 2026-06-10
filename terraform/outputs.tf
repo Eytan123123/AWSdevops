@@ -11,3 +11,18 @@ output "github_actions_role_arn" {
   description = "ARN of the IAM Role that GitHub Actions assumes via OIDC"
   value       = module.iam.github_actions_role_arn
 }
+
+output "vpc_id" {
+  description = "ID of the VPC"
+  value       = module.vpc.vpc_id
+}
+
+output "public_subnet_ids" {
+  description = "IDs of the public subnets"
+  value       = module.vpc.public_subnet_ids
+}
+
+output "private_subnet_ids" {
+  description = "IDs of the private subnets"
+  value       = module.vpc.private_subnet_ids
+}

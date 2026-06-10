@@ -32,6 +32,18 @@ provider "aws" {
 }
 
 
+# VPC module — networking foundation (VPC, subnets, IGW, NAT, route tables)
+module "vpc" {
+  source = "./modules/vpc"
+
+  vpc_cidr             = var.vpc_cidr
+  availability_zones   = var.availability_zones
+  public_subnet_cidrs  = var.public_subnet_cidrs
+  private_subnet_cidrs = var.private_subnet_cidrs
+  environment          = var.environment
+}
+
+
 # IAM module — GitHub Actions OIDC Provider + Role
 # Declared in code so terraform plan validates it, but never applied
 # (no AWS account available for the one-time bootstrap)

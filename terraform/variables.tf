@@ -18,3 +18,27 @@ variable "github_repository" {
   type        = string
   default     = "Eytan123123/AWSdevops"
 }
+
+variable "vpc_cidr" {
+  description = "CIDR block for the VPC"
+  type        = string
+  default     = "10.0.0.0/16"
+}
+
+variable "availability_zones" {
+  description = "AZs to spread subnets across (must match aws_region)"
+  type        = list(string)
+  default     = ["eu-west-1a", "eu-west-1b"]
+}
+
+variable "public_subnet_cidrs" {
+  description = "CIDR blocks for the public subnets (one per AZ)"
+  type        = list(string)
+  default     = ["10.0.1.0/24", "10.0.2.0/24"]
+}
+
+variable "private_subnet_cidrs" {
+  description = "CIDR blocks for the private subnets (one per AZ)"
+  type        = list(string)
+  default     = ["10.0.11.0/24", "10.0.12.0/24"]
+}
