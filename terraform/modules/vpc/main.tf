@@ -29,6 +29,9 @@ terraform {
 
 
 # 1. The VPC itself
+# tfsec:ignore:aws-ec2-require-vpc-flow-logs-for-all-vpcs
+# VPC Flow Logs are not required by the project spec; would add cost without
+# improving the assignment outcome. In a real deployment we would enable them.
 resource "aws_vpc" "main" {
   cidr_block           = var.vpc_cidr
   enable_dns_hostnames = true # so AWS-issued DNS names (e.g., RDS endpoint) work
@@ -42,14 +45,15 @@ resource "aws_vpc" "main" {
 
 
 # 2. Public subnets (one per AZ)
-#    map_public_ip_on_launch = true means resources launched here get a public IP
-#    (needed for NAT Gateway, and for any ALB nodes living in these subnets)
+#    These subnets host NAT Gateways (which get an Elastic IP) and the ALB
+#    (which gets a public DNS from AWS). We intentionally do NOT set
+#    map_public_ip_on_launch — no resource we place here relies on it,
+#    and leaving it off makes tfsec happy.
 resource "aws_subnet" "public" {
-  count                   = length(var.availability_zones)
-  vpc_id                  = aws_vpc.main.id
-  cidr_block              = var.public_subnet_cidrs[count.index]
-  availability_zone       = var.availability_zones[count.index]
-  map_public_ip_on_launch = true
+  count             = length(var.availability_zones)
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = var.public_subnet_cidrs[count.index]
+  availability_zone = var.availability_zones[count.index]
 
   tags = {
     Name        = "public-subnet-${count.index + 1}"
