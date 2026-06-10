@@ -123,21 +123,6 @@ variable "cpu_target_value" {
 
 # ─── Observability ─────────────────────────────────────────────────
 
-variable "microservice_names" {
-  description = "List of microservice names — one CloudWatch Log Group is created per name"
-  type        = list(string)
-  default = [
-    "service-1",
-    "service-2",
-    "service-3",
-    "service-4",
-    "service-5",
-    "service-6",
-    "service-7",
-    "service-8",
-  ]
-}
-
 variable "log_retention_days" {
   description = "How many days CloudWatch keeps log events"
   type        = number
