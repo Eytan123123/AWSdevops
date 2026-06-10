@@ -44,12 +44,15 @@ module "vpc" {
 }
 
 
-# IAM module — GitHub Actions OIDC Provider + Role
-# Declared in code so terraform plan validates it, but never applied
-# (no AWS account available for the one-time bootstrap)
+# IAM module — OIDC, IAM roles, Security Groups, Secrets Manager
+# Includes the GitHub bootstrap resources (OIDC + Role) which are never applied,
+# and the runtime security primitives that the rest of the infrastructure consumes.
 module "iam" {
   source = "./modules/iam"
 
   github_repository = var.github_repository
   environment       = var.environment
+  vpc_id            = module.vpc.vpc_id
+  app_port          = var.app_port
+  db_port           = var.db_port
 }

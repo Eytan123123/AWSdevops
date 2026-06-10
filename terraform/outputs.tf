@@ -26,3 +26,13 @@ output "private_subnet_ids" {
   description = "IDs of the private subnets"
   value       = module.vpc.private_subnet_ids
 }
+
+output "ec2_instance_profile_name" {
+  description = "Name of the EC2 Instance Profile"
+  value       = module.iam.ec2_instance_profile_name
+}
+
+output "db_credentials_secret_arn" {
+  description = "ARN of the Secrets Manager secret with the RDS credentials"
+  value       = module.iam.db_credentials_secret_arn
+}
