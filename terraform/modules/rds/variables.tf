@@ -44,15 +44,15 @@ variable "instance_class" {
 }
 
 variable "allocated_storage" {
-  description = "Initial storage size in GB"
+  description = "Initial storage size in GB (matches the 500 GB on-premise DB per the project spec)"
   type        = number
-  default     = 100
+  default     = 500
 }
 
 variable "max_allocated_storage" {
-  description = "Upper bound for storage autoscaling (GB)"
+  description = "Upper bound for storage autoscaling (GB) — leaves headroom above the initial allocation"
   type        = number
-  default     = 500
+  default     = 1000
 }
 
 variable "deletion_protection" {
