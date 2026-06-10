@@ -21,16 +21,17 @@ resource "aws_security_group" "alb" {
   }
 }
 
-# Public-facing HTTPS is the whole point of the ALB; the 0.0.0.0/0 here is intentional
+# Public-facing HTTP is the whole point of the ALB; the 0.0.0.0/0 here is intentional.
+# A production deployment would use HTTPS (443) with an ACM certificate.
 # tfsec:ignore:aws-vpc-no-public-ingress-sgr
-resource "aws_security_group_rule" "alb_ingress_https" {
+resource "aws_security_group_rule" "alb_ingress_http" {
   security_group_id = aws_security_group.alb.id
   type              = "ingress"
-  from_port         = 443
-  to_port           = 443
+  from_port         = 80
+  to_port           = 80
   protocol          = "tcp"
   cidr_blocks       = ["0.0.0.0/0"]
-  description       = "HTTPS from internet"
+  description       = "HTTP from internet"
 }
 
 resource "aws_security_group_rule" "alb_egress_to_ec2" {

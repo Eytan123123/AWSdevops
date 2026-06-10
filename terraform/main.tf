@@ -69,3 +69,15 @@ module "rds" {
   db_password        = module.iam.db_password
   db_port            = var.db_port
 }
+
+
+# ALB module — public Application Load Balancer + Target Group + Listener
+module "alb" {
+  source = "./modules/alb"
+
+  environment       = var.environment
+  vpc_id            = module.vpc.vpc_id
+  public_subnet_ids = module.vpc.public_subnet_ids
+  security_group_id = module.iam.alb_security_group_id
+  app_port          = var.app_port
+}

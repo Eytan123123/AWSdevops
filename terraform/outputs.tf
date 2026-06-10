@@ -46,3 +46,13 @@ output "rds_address" {
   description = "RDS hostname"
   value       = module.rds.db_address
 }
+
+output "alb_dns_name" {
+  description = "Public DNS name of the ALB"
+  value       = module.alb.alb_dns_name
+}
+
+output "alb_target_group_arn" {
+  description = "ARN of the ALB Target Group (consumed by the EC2 Auto Scaling Group)"
+  value       = module.alb.target_group_arn
+}
