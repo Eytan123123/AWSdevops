@@ -53,20 +53,9 @@ jobs:
         with:
           working_directory: ./terraform
 
-      # Override the S3 backend to a local one so Terraform can init without
-      # talking to AWS. The S3 backend in main.tf stays as the production
-      # configuration; the override applies only here in CI.
-      - name: Override backend for CI (local state)
-        run: |
-          cat > backend_override.tf <<EOF
-          terraform {
-            backend "local" {}
-          }
-          EOF
-
-      # Initialize providers and the (now local) backend
+      # Initialize providers; skip backend (no state needed for plan in CI)
       - name: Terraform Init
-        run: terraform init
+        run: terraform init -backend=false
 
       # TEST: configuration correctness — valid syntax, all references
       # resolve, variables exist, types match. Does not contact AWS.
