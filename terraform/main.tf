@@ -125,3 +125,83 @@ module "ec2" {
   db_port      = var.db_port
   db_secret_id = "rds-db-credentials"
 }
+
+
+# ─── Remote-state bootstrap resources ───────────────────────────────────────
+#
+# The S3 bucket below stores the Terraform state, and the DynamoDB table
+# provides distributed locking so two concurrent runs cannot corrupt it.
+#
+# These are the resources the commented-out `backend "s3"` block at the top of
+# this file would reference. Per the project spec they are "configured, not
+# applied" — they appear in `terraform plan` so anyone reading the code can see
+# the intended bootstrap, but the project itself never runs apply.
+
+# S3 bucket — holds the state file. Versioned, encrypted, fully private.
+# tfsec ignores below: logging and customer KMS key are not required by the spec.
+# trivy:ignore:AVD-AWS-0089
+# trivy:ignore:AVD-AWS-0132
+resource "aws_s3_bucket" "tfstate" {
+  bucket = var.tfstate_bucket_name
+
+  tags = {
+    Name        = var.tfstate_bucket_name
+    Environment = var.environment
+  }
+}
+
+# Versioning — every state write keeps history; protects against accidental loss
+resource "aws_s3_bucket_versioning" "tfstate" {
+  bucket = aws_s3_bucket.tfstate.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+# Server-side encryption — AES-256 with the AWS-managed S3 key.
+# A customer-managed KMS key would give finer control but is not required by
+# the project spec and would add cost.
+# tfsec:ignore:aws-s3-encryption-customer-key
+resource "aws_s3_bucket_server_side_encryption_configuration" "tfstate" {
+  bucket = aws_s3_bucket.tfstate.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+# Block all public access — state files are sensitive and must stay private
+resource "aws_s3_bucket_public_access_block" "tfstate" {
+  bucket                  = aws_s3_bucket.tfstate.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+# DynamoDB table — used by Terraform's S3 backend for state locking.
+# A row with LockID = "<bucket>/<key>" is written when a run starts and removed
+# when it ends, preventing two concurrent applies.
+#
+# Encryption uses the AWS-managed DynamoDB KMS key (default). A customer-managed
+# key and point-in-time recovery are not required for an ephemeral lock table.
+# tfsec:ignore:aws-dynamodb-enable-at-rest-encryption
+# tfsec:ignore:aws-dynamodb-table-customer-key
+# tfsec:ignore:aws-dynamodb-enable-recovery
+resource "aws_dynamodb_table" "tfstate_lock" {
+  name         = var.tfstate_lock_table_name
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "LockID"
+
+  attribute {
+    name = "LockID"
+    type = "S"
+  }
+
+  tags = {
+    Name        = var.tfstate_lock_table_name
+    Environment = var.environment
+  }
+}
