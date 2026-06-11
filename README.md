@@ -137,6 +137,41 @@ In a real deployment they would be applied once, manually, by an admin with
 their own access keys. After that, the rest of the project runs through CI
 without any long-lived credentials anywhere.
 
+### Step-by-step bootstrap (real deployment)
+
+```bash
+# 1. Configure the admin's AWS credentials locally (one-time)
+aws configure
+
+# 2. Apply only the bootstrap resources (S3 bucket + DynamoDB + IAM/OIDC)
+cd terraform
+terraform init
+terraform apply -target=aws_s3_bucket.tfstate \
+                -target=aws_dynamodb_table.tfstate_lock \
+                -target=module.iam.aws_iam_openid_connect_provider.github \
+                -target=module.iam.aws_iam_role.github_actions
+
+# 3. Add a backend "s3" block to main.tf:
+#
+#   terraform {
+#     backend "s3" {
+#       bucket         = "aws-migration-tfstate-eytan"
+#       key            = "terraform/state.tfstate"
+#       region         = "eu-west-1"
+#       dynamodb_table = "terraform-state-lock"
+#       encrypt        = true
+#     }
+#   }
+
+# 4. Move the local state into S3
+terraform init -migrate-state
+
+# 5. Copy the github_actions_role_arn output into the repo as a Secret
+#    (Settings → Secrets and variables → Actions → AWS_ROLE_ARN)
+```
+
+From this point on CI/CD uses OIDC and the S3 backend — no more manual steps.
+
 ## Notes
 
 - `terraform apply` is **never** run by the pipelines. The assignment requires
