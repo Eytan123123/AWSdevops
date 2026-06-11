@@ -143,13 +143,17 @@ without any long-lived credentials anywhere.
 # 1. Configure the admin's AWS credentials locally (one-time)
 aws configure
 
-# 2. Apply only the bootstrap resources (S3 bucket + DynamoDB + IAM/OIDC)
+# 2. Apply only the bootstrap resources (S3 bucket + its hardening, DynamoDB, IAM/OIDC)
 cd terraform
 terraform init
-terraform apply -target=aws_s3_bucket.tfstate \
-                -target=aws_dynamodb_table.tfstate_lock \
-                -target=module.iam.aws_iam_openid_connect_provider.github \
-                -target=module.iam.aws_iam_role.github_actions
+terraform apply \
+  -target=aws_s3_bucket.tfstate \
+  -target=aws_s3_bucket_versioning.tfstate \
+  -target=aws_s3_bucket_server_side_encryption_configuration.tfstate \
+  -target=aws_s3_bucket_public_access_block.tfstate \
+  -target=aws_dynamodb_table.tfstate_lock \
+  -target=module.iam.aws_iam_openid_connect_provider.github \
+  -target=module.iam.aws_iam_role.github_actions
 
 # 3. Add a backend "s3" block to main.tf:
 #
