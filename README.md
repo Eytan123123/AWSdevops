@@ -46,10 +46,12 @@ terraform plan
 
 That's it. Terraform will show you everything it would create in AWS.
 
-**Why `-backend=false`?** The project is configured to store state in S3 +
-DynamoDB. Those resources don't exist yet (the project ships unapplied), so
-we tell init to skip the backend setup. Once the bootstrap is done in a real
-account, drop the flag.
+**Why `-backend=false`?** The repo defines the S3 bucket and DynamoDB table
+that would hold Terraform state, but does not wire them as the active backend
+(they ship "configured, not applied" per the spec). The flag tells init to
+skip backend setup so plan runs purely offline. In a real deployment you'd
+apply those two resources first, then add a `backend "s3"` block and re-init
+without the flag.
 
 ## CI/CD pipelines
 
@@ -113,20 +115,27 @@ AWSdevops/
 
 ## Bootstrap (for a real deployment)
 
-A few things must exist in AWS before this Terraform can be applied. They
-break the chicken-and-egg problem of "Terraform needs AWS to create AWS":
+A few resources must exist in AWS before the project can be applied properly.
+They break the chicken-and-egg problem of "Terraform needs AWS to create AWS":
 
-1. **OIDC Identity Provider for GitHub** — so the CI workflow can assume an IAM Role
-2. **`github-actions-terraform` IAM Role** with read-only permissions
-3. **S3 bucket** `aws-migration-tfstate-eytan` for Terraform state
-4. **DynamoDB table** `terraform-state-lock` for state locking
+1. **OIDC Identity Provider for GitHub** — defined in `modules/iam/main.tf`,
+   needed so the CI workflow can assume an IAM Role via OIDC instead of
+   long-lived access keys.
+2. **`github-actions-terraform` IAM Role** — also in `modules/iam/main.tf`,
+   with read-only permissions for `terraform plan`.
+3. **S3 bucket `aws-migration-tfstate-eytan`** — defined at the root in
+   `terraform/main.tf`, would hold the Terraform state.
+4. **DynamoDB table `terraform-state-lock`** — also at the root, would
+   provide state locking so two concurrent runs cannot corrupt the state.
 
-These are typically created once, manually, by an admin with their own access
-keys. After that, the rest of the project runs through CI without any
-long-lived credentials anywhere.
+All four are written as Terraform resources in the repo. They show up in
+`terraform plan` so anyone reading the code can see the intended bootstrap,
+but the project never runs apply — these are "configured, not applied" per
+the project spec.
 
-The IAM module (`terraform/modules/iam/`) contains the Terraform code for the
-OIDC Provider + Role — it's not applied by CI but documents the desired shape.
+In a real deployment they would be applied once, manually, by an admin with
+their own access keys. After that, the rest of the project runs through CI
+without any long-lived credentials anywhere.
 
 ## Notes
 
