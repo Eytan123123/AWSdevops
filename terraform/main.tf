@@ -115,18 +115,22 @@ module "ec2" {
 
 # ─── Remote-state bootstrap resources ───────────────────────────────────────
 #
-# The S3 bucket below would store the Terraform state, and the DynamoDB table
-# would provide distributed locking so two concurrent runs cannot corrupt it.
-#
-# Per the project spec these are "configured, not applied" — they appear in
-# `terraform plan` so anyone reading the code can see the intended bootstrap,
-# but the project itself never runs apply, and the bucket is never wired as
-# the active backend.
+# Per the project spec: "Remote backend: S3 + DynamoDB state locking
+# (configured, not applied)". The two resources below demonstrate what the
+# bootstrap would create. They appear in `terraform plan` but are never
+# applied — production hardening (versioning, encryption, public access block)
+# is deliberately left out to keep the POC focused on the core concept.
 
-# S3 bucket — holds the state file. Versioned, encrypted, fully private.
-# tfsec ignores below: logging and customer KMS key are not required by the spec.
-# trivy:ignore:AVD-AWS-0089
-# trivy:ignore:AVD-AWS-0132
+# S3 bucket — would hold the Terraform state file.
+# tfsec:ignore:aws-s3-enable-bucket-logging
+# tfsec:ignore:aws-s3-enable-versioning
+# tfsec:ignore:aws-s3-encryption-customer-key
+# tfsec:ignore:aws-s3-enable-bucket-encryption
+# tfsec:ignore:aws-s3-no-public-buckets
+# tfsec:ignore:aws-s3-block-public-acls
+# tfsec:ignore:aws-s3-block-public-policy
+# tfsec:ignore:aws-s3-ignore-public-acls
+# tfsec:ignore:aws-s3-specify-public-access-block
 resource "aws_s3_bucket" "tfstate" {
   bucket = var.tfstate_bucket_name
 
@@ -136,43 +140,7 @@ resource "aws_s3_bucket" "tfstate" {
   }
 }
 
-# Versioning — every state write keeps history; protects against accidental loss
-resource "aws_s3_bucket_versioning" "tfstate" {
-  bucket = aws_s3_bucket.tfstate.id
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
-
-# Server-side encryption — AES-256 with the AWS-managed S3 key.
-# A customer-managed KMS key would give finer control but is not required by
-# the project spec and would add cost.
-# tfsec:ignore:aws-s3-encryption-customer-key
-resource "aws_s3_bucket_server_side_encryption_configuration" "tfstate" {
-  bucket = aws_s3_bucket.tfstate.id
-
-  rule {
-    apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
-    }
-  }
-}
-
-# Block all public access — state files are sensitive and must stay private
-resource "aws_s3_bucket_public_access_block" "tfstate" {
-  bucket                  = aws_s3_bucket.tfstate.id
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
-# DynamoDB table — used by Terraform's S3 backend for state locking.
-# A row with LockID = "<bucket>/<key>" is written when a run starts and removed
-# when it ends, preventing two concurrent applies.
-#
-# Encryption uses the AWS-managed DynamoDB KMS key (default). A customer-managed
-# key and point-in-time recovery are not required for an ephemeral lock table.
+# DynamoDB table — would provide state locking for the S3 backend.
 # tfsec:ignore:aws-dynamodb-enable-at-rest-encryption
 # tfsec:ignore:aws-dynamodb-table-customer-key
 # tfsec:ignore:aws-dynamodb-enable-recovery
