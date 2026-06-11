@@ -11,20 +11,6 @@ terraform {
       version = "~> 5.0"
     }
   }
-
-  # Remote state backend — project spec: "S3 + DynamoDB state locking
-  # (configured, not applied)". Block kept as a comment because the bucket and
-  # table don't exist yet (they need a one-off bootstrap apply with admin keys).
-  # To activate: create the bucket + table, then uncomment this block and run
-  # `terraform init -migrate-state`.
-  #
-  # backend "s3" {
-  #   bucket         = "aws-migration-tfstate-eytan"
-  #   key            = "terraform/state.tfstate"
-  #   region         = "eu-west-1"
-  #   dynamodb_table = "terraform-state-lock"
-  #   encrypt        = true
-  # }
 }
 
 # AWS provider configuration
@@ -129,13 +115,13 @@ module "ec2" {
 
 # ─── Remote-state bootstrap resources ───────────────────────────────────────
 #
-# The S3 bucket below stores the Terraform state, and the DynamoDB table
-# provides distributed locking so two concurrent runs cannot corrupt it.
+# The S3 bucket below would store the Terraform state, and the DynamoDB table
+# would provide distributed locking so two concurrent runs cannot corrupt it.
 #
-# These are the resources the commented-out `backend "s3"` block at the top of
-# this file would reference. Per the project spec they are "configured, not
-# applied" — they appear in `terraform plan` so anyone reading the code can see
-# the intended bootstrap, but the project itself never runs apply.
+# Per the project spec these are "configured, not applied" — they appear in
+# `terraform plan` so anyone reading the code can see the intended bootstrap,
+# but the project itself never runs apply, and the bucket is never wired as
+# the active backend.
 
 # S3 bucket — holds the state file. Versioned, encrypted, fully private.
 # tfsec ignores below: logging and customer KMS key are not required by the spec.
