@@ -91,39 +91,15 @@ resource "aws_iam_role_policy_attachment" "github_actions_poweruser" {
 }
 
 
-# 5. Attach inline policy for S3 state backend and DynamoDB locking
-# These permissions are required by Terraform to manage state in S3 and use DynamoDB for locking
-resource "aws_iam_role_policy" "github_actions_terraform_state" {
-  name = "terraform-state-management"
-  role = aws_iam_role.github_actions.id
+# 5. Attach AmazonS3FullAccess for Terraform state backend
+resource "aws_iam_role_policy_attachment" "github_actions_s3_full" {
+  role       = aws_iam_role.github_actions.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+}
 
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "s3:ListBucket",
-          "s3:GetBucketVersioning",
-          "s3:GetObject",
-          "s3:PutObject",
-          "s3:DeleteObject"
-        ]
-        Resource = [
-          "arn:aws:s3:::aws-migration-tfstate-eytan",
-          "arn:aws:s3:::aws-migration-tfstate-eytan/*"
-        ]
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "dynamodb:DescribeTable",
-          "dynamodb:GetItem",
-          "dynamodb:PutItem",
-          "dynamodb:DeleteItem"
-        ]
-        Resource = "arn:aws:dynamodb:*:*:table/terraform-state-lock"
-      }
-    ]
-  })
+
+# 6. Attach AmazonDynamoDBFullAccess for Terraform state locking
+resource "aws_iam_role_policy_attachment" "github_actions_dynamodb_full" {
+  role       = aws_iam_role.github_actions.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"
 }
