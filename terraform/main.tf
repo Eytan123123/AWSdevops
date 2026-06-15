@@ -11,6 +11,13 @@ terraform {
       version = "~> 5.0"
     }
   }
+  backend "s3" {
+    bucket         = "aws-migration-tfstate-eytan"
+    key            = "terraform/state.tfstate"
+    region         = "eu-west-1"
+    dynamodb_table = "terraform-state-lock"
+    encrypt        = true
+  }
 }
 
 # AWS provider configuration
