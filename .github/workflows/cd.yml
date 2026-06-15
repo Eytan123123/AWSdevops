@@ -31,7 +31,7 @@ jobs:
 
       # Initialize providers; skip backend (no state needed for plan)
       - name: Terraform Init
-        run: terraform init -backend=false
+        run: terraform init -migrate-state
 
       # Produce the plan and save it to a binary file (tfplan).
       # Also produce a human-readable text version for the summary step.
