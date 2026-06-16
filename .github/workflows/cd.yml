@@ -46,7 +46,7 @@ jobs:
       # The AWS provider runs offline thanks to skip_* flags in main.tf.
       - name: Terraform Plan
         run: |
-          terraform plan -no-color -out=tfplan
+          terraform plan -no-color -out=tfplan -lock=false
           terraform show -no-color tfplan > plan.txt
 
       # Upload the tfplan file as a workflow artifact for later review
