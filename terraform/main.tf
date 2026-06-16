@@ -14,7 +14,7 @@ terraform {
   backend "s3" {
     bucket         = "aws-migration-tfstate-eytan"
     key            = "terraform/state.tfstate"
-    region         = "eu-west-1"
+    region         = "il-central-1"
     dynamodb_table = "terraform-state-lock"
     encrypt        = true
   }
