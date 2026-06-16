@@ -6,8 +6,9 @@ on:
     branches: [main]
 
 permissions:
-  contents: read   # Read repo files
-
+  contents: read
+  id-token: write
+  
 jobs:
   plan:
     name: Plan & Archive
