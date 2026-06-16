@@ -46,7 +46,7 @@ resource "aws_iam_openid_connect_provider" "github" {
 
 # 2. IAM Role assumed by GitHub Actions
 # - Trust policy: only GitHub Actions runs from this specific repo may assume the role
-# - Permissions: Read-only for inspection + write access for Terraform apply
+# - Permissions: Administrator access for full control over AWS resources and state management
 resource "aws_iam_role" "github_actions" {
   name = "github-actions-terraform"
 
@@ -76,30 +76,9 @@ resource "aws_iam_role" "github_actions" {
 }
 
 
-# 3. Attach ReadOnlyAccess for terraform plan (inspect AWS state)
-resource "aws_iam_role_policy_attachment" "github_actions_readonly" {
+# 3. Attach AdministratorAccess for full AWS permissions
+# This allows the pipeline to manage all resources including IAM, state backend, and application infrastructure
+resource "aws_iam_role_policy_attachment" "github_actions_admin" {
   role       = aws_iam_role.github_actions.name
-  policy_arn = "arn:aws:iam::aws:policy/ReadOnlyAccess"
-}
-
-
-# 4. Attach PowerUserAccess for terraform apply (create/update/delete resources)
-# PowerUserAccess allows all actions except IAM management
-resource "aws_iam_role_policy_attachment" "github_actions_poweruser" {
-  role       = aws_iam_role.github_actions.name
-  policy_arn = "arn:aws:iam::aws:policy/PowerUserAccess"
-}
-
-
-# 5. Attach AmazonS3FullAccess for Terraform state backend
-resource "aws_iam_role_policy_attachment" "github_actions_s3_full" {
-  role       = aws_iam_role.github_actions.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
-}
-
-
-# 6. Attach AmazonDynamoDBFullAccess for Terraform state locking
-resource "aws_iam_role_policy_attachment" "github_actions_dynamodb_full" {
-  role       = aws_iam_role.github_actions.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"
+  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
 }
