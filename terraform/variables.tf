@@ -30,7 +30,7 @@ variable "vpc_cidr" {
 variable "availability_zones" {
   description = "AZs to spread subnets across (must match aws_region)"
   type        = list(string)
-  default     = ["eu-west-1a", "eu-west-1b"]
+  default     = ["il-central-1a", "il-central-1b"]
 }
 
 variable "public_subnet_cidrs" {
