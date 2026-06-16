@@ -69,3 +69,10 @@ jobs:
             cat plan.txt
             echo '```'
           } >> $GITHUB_STEP_SUMMARY
+
+      - name: Terraform apply
+        run: terraform apply
+        
+        
+        
+        
