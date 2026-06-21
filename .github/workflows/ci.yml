@@ -1,8 +1,8 @@
 name: 
 
 on:
-  push:
-    branches-ignore: [main]  # רץ על כל push חוץ מ-main
+  # push:
+  #   branches-ignore: [main]  # רץ על כל push חוץ מ-main
   pull_request:
     branches: [main]
 
