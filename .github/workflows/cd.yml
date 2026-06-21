@@ -2,7 +2,7 @@ name: CD
 
 # Runs only on push to main (i.e. after a PR merge — direct pushes blocked by branch protection)
 on:
-  push:
+  pull_request: 
     branches: [main]
 
 permissions:
